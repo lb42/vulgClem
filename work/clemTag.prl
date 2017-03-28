@@ -1,0 +1,45 @@
+# perl hackery to process Vusearch format .lat files
+# not my finest piece of programming but it works
+#
+# Lou Burnard 2017-03-28
+
+$chap=0;
+print "<div type=\"book\" xmlns=\"http:\/\/www.tei-c.org/ns\/1.0\">\n";
+while (<>) {
+chop;
+if (/([\d]+):([\d]+)(.+)$/) {
+#print "CH $1 VS $2 : $3\n";
+$thisCH = $1; $thisV = $2; $line = $3;
+$line =~ s///;
+
+#first deal with < > 
+$line =~ s/<(.+)\>/\<label>$1<\/label>/;
+# this doesnt work as expected on lines with two labels but I cant be
+# bothered to fix it
+
+#$line =~ s/\/ /\&lineEnd; /g;
+#$line =~ s/([^\/]+)\/\z/\1\&lineEnd;/;
+
+$line =~ s/\\/\&\#x00B6;/;   #pilcrow
+
+# cant be bothered to deal with pesky [ flags either
+#$line =~ s/\[/\&poemBegins;/;
+#$line =~ s/\]/\&poemEnds;/;
+
+#special characters
+$line =~ s/ë/\&\#x00EB;/g; #euml
+$line =~ s/æ/\&\#x00E6;/g;  #aelig
+$line =~ s/œ/\&\#x0153;/g; #oelig
+$line =~ s/Æ/\&\#x00C6;/g; #AElig
+$line =~ s/ \([:;!?]\)/\&nbsp;\1/g;
+
+if ($thisCH > $chap) {
+#newchap
+  print "<\/div>\n" if ($chap > 0);
+  print "<div type\=\"chap\" n\=\"$thisCH\">\n";
+  $chap=$thisCH;
+  }
+  print "<ab  n\=\"$thisV\">$line<\/ab>\n";  
+}
+}
+print "<\/div>\n<\/div>\n";
